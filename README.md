@@ -1,48 +1,65 @@
 ```mermaid
 flowchart TB
   %% =========================================================
-  %% MODULE G2-A: Policy-Aware Hybrid Retriever (Latest Code)
+  %% Modul G2-A: Policy-Aware Hybrid Retriever (Latest Code)
   %% =========================================================
 
-  %% ---------------------------
-  %% PHASE 1: INITIALIZATION
-  %% ---------------------------
-  subgraph P1["PHASE 1 — INITIALIZATION (One-time Setup / Batch Ingest)"]
+  %% ---------- TITLE ----------
+  T["🔎 <b>Modul G2-A: Policy-Aware Hybrid Retriever</b><br/><span style='font-size:12px'>Flowchart Alur Kerja — Dari Ingest Dokumen hingga Output ContextChunk</span>"]:::title
+
+  %% ---------- PHASE 1 LABEL ----------
+  P1LBL["🔧 <b>PHASE 1: INITIALIZATION</b> (One-time Setup / Batch Ingest)"]:::phase
+
+  %% ---------- PHASE 1 ----------
+  subgraph P1[" "]
     direction TB
 
-    A["📁 DocumentLoader.load_all_documents()<br/>Scan folder kbs/"] --> B["📄 Parse documents<br/>• PDF → text per page<br/>• DOCX → paragraphs<br/>• XLSX → sheets → markdown table"]
-    B --> C["🧾 Infer metadata policy<br/>role, system, classification<br/>+ detect doc_type (TABLE/FAQ/POLICY/SOP/DOCUMENT)"]
-    C --> D["✅ Output: List[Document]<br/>(content + doc_type + metadata)"]
+    A1["1. 📁 Document Loading<br/><br/><b>document_loader.py</b><br/>• Scan folder <code>kbs/</code> (PDF/DOCX/XLSX)<br/>• Parse konten sesuai tipe file<br/>• Infer metadata policy + doc_type"]:::stepPink
+    A1O["Output: <b>List[Document]</b><br/>(content + doc_type + metadata)"]:::outBox
 
-    D --> E["🔁 process_and_store_all_documents(docs)"]
+    A2["2. ✂️ Chunking Strategy<br/><br/><b>embedding_generator.py</b><br/><b>SmartChunkSplitter</b><br/>• TABLE: split per rows (10 rows/chunk, header dipertahankan)<br/>• FAQ: split Q/A (fallback generic)<br/>• POLICY/SOP: split sections → split_text_by_size(1200, overlap 250)<br/>• GENERIC: TEXT_SEPARATORS + merge by size (1200, overlap 250)"]:::stepPink
+    A2O["Output: <b>List[Chunk]</b><br/>(content + strict metadata)"]:::outBox
 
-    E --> F["✂️ SmartChunkSplitter.split_document(doc)<br/>(doc_type-aware router)"]
+    A3["3. 🧠 Embedding Generation & Storage<br/><br/><b>embedding_generator.py</b><br/><b>EmbeddingGenerator</b><br/>• Load SentenceTransformer (all-MiniLM-L6-v2, 384-dim)<br/>• Generate embedding untuk tiap chunk<br/>• Store ke PostgreSQL (Neon)"]:::stepOrange
+    A3O["Database: <code>documents</code> & <code>chunks</code><br/>chunks(content, embedding[384], metadata)"]:::dbBox
 
-    %% Chunk strategy detail
-    F --> G["📌 Chunking Strategies<br/><br/>TABLE → split by rows<br/>(EXCEL_ROWS_PER_CHUNK=10, keep header)<br/><br/>FAQ → split by Q/A pattern<br/>(fallback to generic)<br/><br/>POLICY/SOP → split by headings/sections<br/>then split_text_by_size(chunk=1200, overlap=250)<br/><br/>GENERIC → TEXT_SEPARATORS + merge by size<br/>(CHUNK_SIZE=1200, OVERLAP=250)"]
-
-    G --> H["🔒 Create STRICT metadata<br/>{source, role, system, classification}<br/>(4 fields ONLY)"]
-
-    H --> I["🧠 EmbeddingGenerator<br/>• Load SentenceTransformer (all-MiniLM-L6-v2)<br/>• dim=384<br/>• connect PostgreSQL (Neon)"]
-
-    I --> J["📌 Generate embeddings per chunk<br/>vector(384)"]
-
-    J --> K["🗄️ Upsert into PostgreSQL<br/>documents table + chunks table<br/>(chunk_id, content, embedding, metadata)"]
   end
 
-  %% ---------------------------
-  %% PHASE 2: RETRIEVAL
-  %% ---------------------------
-  subgraph P2["PHASE 2 — RETRIEVAL (Runtime Query)"]
+  %% ---------- PHASE 2 LABEL ----------
+  P2LBL["⚡ <b>PHASE 2: RETRIEVAL</b> (Runtime Query)"]:::phase
+
+  %% ---------- PHASE 2 ----------
+  subgraph P2[" "]
     direction TB
 
-    Q["🔎 User Query"] --> QE["🧠 Embed query<br/>SentenceTransformer → vector(384)"]
+    Q0["🔎 INPUT: User Query"]:::inputBox
 
-    QE --> VS["📌 pgvector similarity search<br/>ORDER BY embedding <=> query_vector ASC<br/>similarity = 1 - distance"]
+    B1["4. 🧠 Query Embedding<br/><br/><b>retriever.py</b><br/>• Embed query → vector(384)"]:::stepPink
 
-    VS --> PF["🛡️ Policy Filtering (STRICT)<br/><br/>WHERE metadata.role IN allowed_roles<br/>AND metadata.classification IN allowed_classifications<br/>AND (optional) metadata.system = system_filter<br/><br/>⚠️ If system_filter provided → STRICT (NO fallback)"]
+    B2["5. 🧭 Vector Similarity Search (pgvector)<br/><br/>• SQL: ORDER BY embedding <=> query_vector<br/>• similarity = 1 - distance"]:::stepOrange
 
-    PF --> TH["📉 Thresholding + sorting<br/>SIMILARITY_THRESHOLD<br/>MIN_CONFIDENCE_SCORE<br/>sort descending by relevance_score"]
+    B3["6. 🛡️ Policy Filter (STRICT)<br/><br/>• role ∈ allowed_roles<br/>• classification ∈ allowed_classifications<br/>• optional: system = system_filter<br/><b>STRICT:</b> jika system_filter diberikan → <u>NO fallback</u>"]:::stepPurple
 
-    TH --> OUT["✅ Output RetrievalResult<br/>List[ContextChunk]<br/>metadata STRICT 4 fields"]
+    B4["7. 📉 Thresholding & Sorting<br/><br/>• SIMILARITY_THRESHOLD<br/>• MIN_CONFIDENCE_SCORE<br/>• sort by relevance_score desc"]:::stepPink
+
+    OUT["✅ OUTPUT: <b>RetrievalResult</b><br/>List[ContextChunk]<br/><span style='font-size:12px'>metadata STRICT 4 fields: source, role, system, classification</span>"]:::outputBox
   end
+
+  %% ---------- FLOW ----------
+  T --> P1LBL --> A1 --> A1O --> A2 --> A2O --> A3 --> A3O --> P2LBL --> Q0 --> B1 --> B2 --> B3 --> B4 --> OUT
+
+  %% ---------- STYLES ----------
+  classDef title fill:#ffffff,stroke:#ffffff,color:#1f2a37,font-size:18px;
+  classDef phase fill:#6d28d9,stroke:#6d28d9,color:#ffffff,font-size:13px;
+
+  classDef stepPink fill:#ff5aa5,stroke:#ff5aa5,color:#ffffff;
+  classDef stepOrange fill:#f8b26a,stroke:#f8b26a,color:#1f2a37;
+
+  classDef stepPurple fill:#7c3aed,stroke:#7c3aed,color:#ffffff;
+
+  classDef outBox fill:#ffffff,stroke:#93c5fd,color:#111827,stroke-dasharray: 5 3;
+  classDef dbBox fill:#ffffff,stroke:#f59e0b,color:#111827,stroke-dasharray: 5 3;
+
+  classDef inputBox fill:#e0f2fe,stroke:#38bdf8,color:#0f172a;
+  classDef outputBox fill:#e0f2fe,stroke:#38bdf8,color:#0f172a;
+
