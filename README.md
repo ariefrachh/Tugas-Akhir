@@ -75,6 +75,8 @@ dataset_path = "your_dataset_path"
 jupyter notebook
 ```
 
+---
+
 ##📊 Data Visualization
 Tahapan ini mencakup:
 
@@ -82,7 +84,10 @@ Tahapan ini mencakup:
 - Sampling gambar secara acak
 - Visualisasi perbandingan kelas NORMAL dan TUBERCULOSIS
 
+---
+
 ##Workflow
+```mermaid
 flowchart TD
     A[Load Dataset] --> B[Check Dataset Structure]
     B --> C[Data Visualization]
@@ -94,25 +99,33 @@ flowchart TD
     H --> I[Validation]
     I --> J[Testing]
     J --> K[Evaluation & Metrics]
+```
+---
 
 ##🧪 Output
 
 Model menghasilkan:
 
-Prediksi kelas (NORMAL / TUBERCULOSIS)
-Evaluasi performa model
-Visualisasi hasil prediksi
+- Prediksi kelas (NORMAL / TUBERCULOSIS)
+- Evaluasi performa model
+- Visualisasi hasil prediksi
+
+---
 
 ##⚠️ Notes
 Pastikan struktur dataset sesuai dengan format yang ditentukan
 Path dataset harus valid
 Dataset yang tidak seimbang ditangani menggunakan Focal Loss
 
+---
+
 ##📈 Future Improvements
-Hyperparameter tuning
-Penggunaan arsitektur model yang lebih kompleks (ResNet, EfficientNet)
-Deployment ke API atau web application
-Implementasi explainability (Grad-CAM)
+- Hyperparameter tuning
+- Penggunaan arsitektur model yang lebih kompleks (ResNet, EfficientNet)
+- Deployment ke API atau web application
+- Implementasi explainability (Grad-CAM)
+
+---
 
 ##👨‍💻 Author
 
