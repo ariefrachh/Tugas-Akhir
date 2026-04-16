@@ -1,65 +1,95 @@
-```mermaid
-flowchart TB
-  %% =========================================================
-  %% Modul G2-A: Policy-Aware Hybrid Retriever (Latest Code)
-  %% =========================================================
+# 🫁 Tuberculosis Detection using CNN (Focal Loss - Tiny Model)
 
-  %% ---------- TITLE ----------
-  T["🔎 <b>Modul G2-A: Policy-Aware Hybrid Retriever</b><br/><span style='font-size:12px'>Flowchart Alur Kerja — Dari Ingest Dokumen hingga Output ContextChunk</span>"]:::title
+## 📌 Overview
+Project ini bertujuan untuk melakukan klasifikasi citra X-ray dada menjadi dua kelas:
+- **NORMAL**
+- **TUBERCULOSIS**
 
-  %% ---------- PHASE 1 LABEL ----------
-  P1LBL["🔧 <b>PHASE 1: INITIALIZATION</b> (One-time Setup / Batch Ingest)"]:::phase
+Model yang digunakan adalah Convolutional Neural Network (CNN) dengan arsitektur ringan (tiny model) serta menggunakan **Focal Loss** untuk menangani ketidakseimbangan data (class imbalance).
 
-  %% ---------- PHASE 1 ----------
-  subgraph P1[" "]
-    direction TB
+---
 
-    A1["1. 📁 Document Loading<br/><br/><b>document_loader.py</b><br/>• Scan folder <code>kbs/</code> (PDF/DOCX/XLSX)<br/>• Parse konten sesuai tipe file<br/>• Infer metadata policy + doc_type"]:::stepPink
-    A1O["Output: <b>List[Document]</b><br/>(content + doc_type + metadata)"]:::outBox
+## 📂 Dataset Structure
 
-    A2["2. ✂️ Chunking Strategy<br/><br/><b>embedding_generator.py</b><br/><b>SmartChunkSplitter</b><br/>• TABLE: split per rows (10 rows/chunk, header dipertahankan)<br/>• FAQ: split Q/A (fallback generic)<br/>• POLICY/SOP: split sections → split_text_by_size(1200, overlap 250)<br/>• GENERIC: TEXT_SEPARATORS + merge by size (1200, overlap 250)"]:::stepPink
-    A2O["Output: <b>List[Chunk]</b><br/>(content + strict metadata)"]:::outBox
+Dataset disusun dengan struktur sebagai berikut:
 
-    A3["3. 🧠 Embedding Generation & Storage<br/><br/><b>embedding_generator.py</b><br/><b>EmbeddingGenerator</b><br/>• Load SentenceTransformer (all-MiniLM-L6-v2, 384-dim)<br/>• Generate embedding untuk tiap chunk<br/>• Store ke PostgreSQL (Neon)"]:::stepOrange
-    A3O["Database: <code>documents</code> & <code>chunks</code><br/>chunks(content, embedding[384], metadata)"]:::dbBox
+dataset/
+│
+├── train/
+│   ├── NORMAL/
+│   └── TUBERCULOSIS/
+│
+├── val/
+│   ├── NORMAL/
+│   └── TUBERCULOSIS/
+│
+└── test/
+    ├── NORMAL/
+    └── TUBERCULOSIS/
 
-  end
+---
 
-  %% ---------- PHASE 2 LABEL ----------
-  P2LBL["⚡ <b>PHASE 2: RETRIEVAL</b> (Runtime Query)"]:::phase
+## ⚙️ Features
 
-  %% ---------- PHASE 2 ----------
-  subgraph P2[" "]
-    direction TB
+- Data exploration dan visualisasi
+- Preprocessing citra (konversi RGB, sampling)
+- CNN lightweight architecture
+- Implementasi Focal Loss
+- Pipeline training, validation, dan testing
 
-    Q0["🔎 INPUT: User Query"]:::inputBox
+---
 
-    B1["4. 🧠 Query Embedding<br/><br/><b>retriever.py</b><br/>• Embed query → vector(384)"]:::stepPink
+## 🧠 Model Approach
 
-    B2["5. 🧭 Vector Similarity Search (pgvector)<br/><br/>• SQL: ORDER BY embedding <=> query_vector<br/>• similarity = 1 - distance"]:::stepOrange
+Pendekatan yang digunakan dalam project ini:
 
-    B3["6. 🛡️ Policy Filter (STRICT)<br/><br/>• role ∈ allowed_roles<br/>• classification ∈ allowed_classifications<br/>• optional: system = system_filter<br/><b>STRICT:</b> jika system_filter diberikan → <u>NO fallback</u>"]:::stepPurple
+- Convolutional Neural Network (CNN)
+- Focal Loss untuk mengatasi class imbalance
+- Pembagian data:
+  - Train
+  - Validation
+  - Test
 
-    B4["7. 📉 Thresholding & Sorting<br/><br/>• SIMILARITY_THRESHOLD<br/>• MIN_CONFIDENCE_SCORE<br/>• sort by relevance_score desc"]:::stepPink
+---
 
-    OUT["✅ OUTPUT: <b>RetrievalResult</b><br/>List[ContextChunk]<br/><span style='font-size:12px'>metadata STRICT 4 fields: source, role, system, classification</span>"]:::outputBox
-  end
+## 🚀 How to Run
 
-  %% ---------- FLOW ----------
-  T --> P1LBL --> A1 --> A1O --> A2 --> A2O --> A3 --> A3O --> P2LBL --> Q0 --> B1 --> B2 --> B3 --> B4 --> OUT
+### 1. Clone Repository
 
-  %% ---------- STYLES ----------
-  classDef title fill:#ffffff,stroke:#ffffff,color:#1f2a37,font-size:18px;
-  classDef phase fill:#6d28d9,stroke:#6d28d9,color:#ffffff,font-size:13px;
+```bash
+git clone https://github.com/your-username/your-repo.git
+cd your-repo
 
-  classDef stepPink fill:#ff5aa5,stroke:#ff5aa5,color:#ffffff;
-  classDef stepOrange fill:#f8b26a,stroke:#f8b26a,color:#1f2a37;
+flowchart TD
+    A[Load Dataset] --> B[Check Dataset Structure]
+    B --> C[Data Visualization]
+    C --> D[Preprocessing Image]
+    D --> E[Split Data Train/Val/Test]
+    E --> F[Build CNN Model]
+    F --> G[Apply Focal Loss]
+    G --> H[Training Model]
+    H --> I[Validation]
+    I --> J[Testing]
+    J --> K[Evaluation & Metrics]
 
-  classDef stepPurple fill:#7c3aed,stroke:#7c3aed,color:#ffffff;
+##🧪 Output
 
-  classDef outBox fill:#ffffff,stroke:#93c5fd,color:#111827,stroke-dasharray: 5 3;
-  classDef dbBox fill:#ffffff,stroke:#f59e0b,color:#111827,stroke-dasharray: 5 3;
+Model menghasilkan:
 
-  classDef inputBox fill:#e0f2fe,stroke:#38bdf8,color:#0f172a;
-  classDef outputBox fill:#e0f2fe,stroke:#38bdf8,color:#0f172a;
+Prediksi kelas (NORMAL / TUBERCULOSIS)
+Evaluasi performa model
+Visualisasi hasil prediksi
+##⚠️ Notes
+Pastikan struktur dataset sesuai dengan format yang ditentukan
+Path dataset harus valid
+Dataset yang tidak seimbang ditangani menggunakan Focal Loss
+##📈 Future Improvements
+Hyperparameter tuning
+Penggunaan arsitektur model yang lebih kompleks (ResNet, EfficientNet)
+Deployment ke API atau web application
+Implementasi explainability (Grad-CAM)
+
+##👨‍💻 Author
+
+Arief
 
