@@ -55,11 +55,34 @@ Pendekatan yang digunakan dalam project ini:
 ## 🚀 How to Run
 
 ### 1. Clone Repository
-
 ```bash
 git clone https://github.com/your-username/your-repo.git
 cd your-repo
+```
 
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Set Dataset Path
+```bash
+dataset_path = "your_dataset_path" 
+```
+
+### 4. Run Notebook
+```bash
+jupyter notebook
+```
+
+##📊 Data Visualization
+Tahapan ini mencakup:
+
+- Menampilkan jumlah data per kelas
+- Sampling gambar secara acak
+- Visualisasi perbandingan kelas NORMAL dan TUBERCULOSIS
+
+##Workflow
 flowchart TD
     A[Load Dataset] --> B[Check Dataset Structure]
     B --> C[Data Visualization]
@@ -79,10 +102,12 @@ Model menghasilkan:
 Prediksi kelas (NORMAL / TUBERCULOSIS)
 Evaluasi performa model
 Visualisasi hasil prediksi
+
 ##⚠️ Notes
 Pastikan struktur dataset sesuai dengan format yang ditentukan
 Path dataset harus valid
 Dataset yang tidak seimbang ditangani menggunakan Focal Loss
+
 ##📈 Future Improvements
 Hyperparameter tuning
 Penggunaan arsitektur model yang lebih kompleks (ResNet, EfficientNet)
